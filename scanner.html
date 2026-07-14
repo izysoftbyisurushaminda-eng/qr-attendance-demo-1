@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Scanner Demo</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin:0;}
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px; }
+        #reader { width: 100%; border-radius: 8px; border: 2px solid #ddd; overflow: hidden; }
+        #result { margin-top: 20px; padding: 12px; border-radius: 6px; font-weight: bold; display: none; }
+        .success { background-color: #d1fae5; color: #065f46; }
+        .error { background-color: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2 style="color: #1e3a8a;">QR Attendance Scanner</h2>
+    <div id="reader"></div>
+    <div id="result"></div>
+</div>
+<script>
+    function onScanSuccess(decodedText) {
+        html5QrcodeScanner.clear();
+        const resDiv = document.getElementById('result');
+        fetch('/api/scan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ teacherId: decodedText })
+        })
+        .then(res => res.json())
+        .then(data => {
+            resDiv.style.display = 'block';
+            resDiv.className = data.success ? 'success' : 'error';
+            resDiv.innerText = data.message;
+            setTimeout(() => { resDiv.style.display = 'none'; startScanner(); }, 3000);
+        }).catch(() => {
+            resDiv.style.display = 'block'; resDiv.className = 'error'; resDiv.innerText = "සර්වර් සබඳතාව බිඳවැටී ඇත.";
+            setTimeout(() => { resDiv.style.display = 'none'; startScanner(); }, 3000);
+        });
+    }
+    let html5QrcodeScanner;
+    function startScanner() {
+        html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
+        html5QrcodeScanner.render(onScanSuccess, (err) => {});
+    }
+    window.onload = startScanner;
+</script>
+</body>
+</html>
